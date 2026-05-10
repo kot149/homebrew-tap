@@ -24,9 +24,14 @@ cask "zmk-battery-center" do
   ]
 
   caveats <<~EOS
-    This app is not code-signed. To open it for the first time:
-      1. Right-click "zmk-battery-center.app" in Finder
-      2. Select "Open"
-      3. Click "Open" in the warning dialog
+    This app is not code-signed. On macOS, the app may be blocked from opening.
+    To allow it, either:
+
+    Option 1: Open System Settings > Privacy & Security > Security
+              and click "Open Anyway".
+
+    Option 2: Run the following command in Terminal to remove quarantine:
+              sudo xattr -d com.apple.quarantine /Applications/zmk-battery-center.app
+              (Change the path if the app is installed elsewhere.)
   EOS
 end
