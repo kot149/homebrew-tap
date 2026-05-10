@@ -1,0 +1,105 @@
+name: Update zmk-battery-center Cask
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to update to (without v prefix, e.g. 1.0.0). Defaults to the latest release.'
+        required: false
+  repository_dispatch:
+    types: [release]
+
+jobs:
+  update-cask:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ -n "${{ inputs.version }}" ]]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ -n "${{ github.event.client_payload.version }}" ]]; then
+            VERSION="${{ github.event.client_payload.version }}"
+          else
+            VERSION=$(gh release view --repo kot149/zmk-battery-center --json tagName --jq '.tagName | ltrimstr("v")')
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check if already up to date
+        id: check
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          CURRENT=$(grep -m1 'version "' Casks/zmk-battery-center.rb | grep -oP '"\K[^"]+')
+          if [[ "$CURRENT" == "$VERSION" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Cask is already at v$VERSION, skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download release assets
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release download "v$VERSION" \
+            --repo kot149/zmk-battery-center \
+            --pattern "*.dmg" \
+            --dir /tmp/release
+
+      - name: Compute SHA256
+        if: steps.check.outputs.skip == 'false'
+        id: sha256
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          SHA_ARM=$(sha256sum "/tmp/release/zmk-battery-center_${VERSION}_aarch64.dmg" | awk '{print $1}')
+          SHA_X64=$(sha256sum "/tmp/release/zmk-battery-center_${VERSION}_x64.dmg"     | awk '{print $1}')
+          echo "arm=$SHA_ARM" >> "$GITHUB_OUTPUT"
+          echo "x64=$SHA_X64" >> "$GITHUB_OUTPUT"
+
+      - name: Update cask file
+        if: steps.check.outputs.skip == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA_ARM: ${{ steps.sha256.outputs.arm }}
+          SHA_X64: ${{ steps.sha256.outputs.x64 }}
+        run: |
+          awk -v ver="$VERSION" -v sha_arm="$SHA_ARM" -v sha_x64="$SHA_X64" '
+            /^  version /  { print "  version \"" ver "\""; next }
+            /on_arm/       { in_arm=1; in_intel=0 }
+            /on_intel/     { in_intel=1; in_arm=0 }
+            in_arm   && /sha256/ { sub(/"[a-f0-9]+"/, "\"" sha_arm "\""); in_arm=0 }
+            in_intel && /sha256/ { sub(/"[a-f0-9]+"/, "\"" sha_x64 "\""); in_intel=0 }
+            { print }
+          ' Casks/zmk-battery-center.rb > /tmp/zmk-battery-center.rb
+          mv /tmp/zmk-battery-center.rb Casks/zmk-battery-center.rb
+
+      - name: Create pull request
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          BRANCH="bump/zmk-battery-center-v${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add Casks/zmk-battery-center.rb
+          git commit -m "chore: bump zmk-battery-center to v${VERSION}"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "chore: bump zmk-battery-center to v${VERSION}" \
+            --body "Automated cask update for [zmk-battery-center v${VERSION}](https://github.com/kot149/zmk-battery-center/releases/tag/v${VERSION})." \
+            --base main \
+            --head "$BRANCH"
