@@ -20,7 +20,13 @@ brew tap kot149/tap
 brew install --cask kot149/tap/zmk-battery-center
 ```
 
-> **Note:** This app is not code-signed. On first launch, right-click the app in Finder, select **Open**, then click **Open** in the warning dialog.
+> **Note:** This app is not code-signed. On macOS, the app may be blocked from opening. To allow it, either:
+> - Open **System Settings > Privacy & Security > Security** and click **Open Anyway**.
+> - Or run the following command in Terminal:
+>   ```sh
+>   sudo xattr -d com.apple.quarantine /Applications/zmk-battery-center.app
+>   ```
+>   (Change the path if the app is installed elsewhere.)
 
 ## Updating Casks
 
