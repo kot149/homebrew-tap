@@ -23,7 +23,7 @@ cask "zmk-battery-center" do
     "~/Library/Logs/zmk-battery-center",
   ]
 
-  caveat <<~EOS
+  caveats <<~EOS
     This app is not code-signed. To open it for the first time:
       1. Right-click "zmk-battery-center.app" in Finder
       2. Select "Open"
