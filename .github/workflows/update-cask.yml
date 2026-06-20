@@ -97,7 +97,7 @@ jobs:
           git checkout -b "$BRANCH"
           git add Casks/zmk-battery-center.rb
           git commit -m "chore: bump zmk-battery-center to v${VERSION}"
-          git push origin "$BRANCH"
+          git push --force origin "$BRANCH"
           gh pr create \
             --title "chore: bump zmk-battery-center to v${VERSION}" \
             --body "Automated cask update for [zmk-battery-center v${VERSION}](https://github.com/kot149/zmk-battery-center/releases/tag/v${VERSION})." \
