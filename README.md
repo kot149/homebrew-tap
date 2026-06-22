@@ -6,6 +6,7 @@ Homebrew tap for [kot149](https://github.com/kot149)'s apps.
 
 ```sh
 brew tap kot149/tap
+brew trust kot149/tap
 ```
 
 ## Casks
@@ -17,6 +18,7 @@ brew tap kot149/tap
 ### zmk-battery-center
 
 ```sh
+brew trust --cask kot149/tap/zmk-battery-center
 brew install --cask kot149/tap/zmk-battery-center
 ```
 
