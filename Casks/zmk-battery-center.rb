@@ -1,13 +1,13 @@
 cask "zmk-battery-center" do
-  version "0.10.0"
+  version "0.10.1"
 
   on_arm do
-    sha256 "9a8d8f22ec7ab73ad4df7e8f2a9d621ea6729c395c1da207d2d075a24fe8d825"
+    sha256 "ed937dbf8c3a99797f089e2faa226bc8ca7b4948e75b59b666872512278090e4"
     url "https://github.com/kot149/zmk-battery-center/releases/download/v#{version}/zmk-battery-center_#{version}_aarch64.dmg"
   end
 
   on_intel do
-    sha256 "d207a28b3cc46426b74b91993214cc373e577dc12bb1e72b730cac2f1f250b32"
+    sha256 "7251188edec6aecacb2a3815b0064afab74efe3a9978eeb37bd7252c83072cab"
     url "https://github.com/kot149/zmk-battery-center/releases/download/v#{version}/zmk-battery-center_#{version}_x64.dmg"
   end
 
